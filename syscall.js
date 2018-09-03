@@ -171,16 +171,28 @@ var ENV_CWD = "/";
 var ENV_PATH = ["/bin", "/usr/bin"];
 
 function shell_process_relative(cwd, file) {
-  if(file.startsWith("/")) {
-    return file;
+  //TODO: clean up path
+  if(!file.startsWith("/")) {
+    if(cwd == "/") {
+      file = "/" + file;
+    } else {
+      file = cwd + "/" + file;
+    }
   }
   
-  //FIXME
-  //TODO: ., .., etc.
-  //TODO: clean up path
-  if(cwd == "/") {
-    return "/" + file;
-  } else {
-    return cwd + "/" + file;
+  var qty = (file.match(/\/\./g) || []).length;
+  for(var i = 0; i < qty; i++) {
+    file = file.replace("/./", "/");
   }
+  file = file.replace(/\/\.$/, "");
+  
+  var qty = (file.match(/\/\.\./g) || []).length;
+  for(var i = 0; i < qty; i++) {
+    file = file.replace(/\/[^\/]+\/\.\.\//, "/");
+  }
+  file = file.replace(/\/[^\/]+\/\.\.$/, "");
+  
+  if(file == "") { file = "/"; }
+  
+  return file;
 }

@@ -156,29 +156,7 @@ function(args, stdin, stdout, stderr) {
       
       if(args[0] == "cd") { //builtin: cd
         if(args.length == 2) {
-          var newPath = shells[idx].cwd;
-          //TODO: use shell_process_relative
-          if(args[1] == ".") {
-            
-          } else if(args[1] == "..") {
-            var s = newPath.lastIndexOf("/");
-            if(s != -1) {
-              newPath = newPath.substring(0, s);
-            }
-            if(newPath.length < 1) {
-              newPath = "/";
-            }
-          } else if(args[1].charAt(0) == "/") { //absolute path
-            //TODO: strip trailing slash (if any); remove any multiple-slashes
-            newPath = args[1];
-          } else {
-            var newPath = shells[idx].cwd;
-            if(newPath != "/") {
-              newPath += "/";
-            }
-            
-            newPath += args[1];
-          }
+          var newPath = shell_process_relative(shells[idx].cwd, args[1]);
           
           if(fs_exists(newPath)) {
             if(fs_isdir(newPath)) {
