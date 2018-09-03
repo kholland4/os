@@ -2,7 +2,19 @@ var procfs_files = {
   name: "/",
   type: "dir",
   data: [
-    {name: "mounts", type: "file", data: function() { return "hi"; }}
+    {name: "mounts", type: "file", data: function() {
+      var out = "";
+      for(var i = 0; i < fs_mounts.length; i++) {
+        var propsRaw = fs_mounts[i].params;
+        var props = "";
+        for(const [key, value] of Object.entries(propsRaw)) {
+          if(props != "") { props += ","; }
+          props += key + "=" + value;
+        }
+        out += fs_mounts[i].location + " " + fs_mounts[i].type + " " + props + "\n";
+      }
+      return out;
+    }}
   ]
 };
 
