@@ -178,6 +178,23 @@ function fs_mkdir(file) {
   return null;
 }
 
+//TODO: check for active mounts
+function fs_rmdir(file) {
+  var location = fs_find(file);
+  if(location == null) { return null; }
+  var idx = fs_get_index(location.id);
+  
+  if(fs_mounts[idx].type == "tmpfs") {
+    return tmpfs_rmdir(location.id, location.subpath);
+  } else if(fs_mounts[idx].type == "httpfs") {
+    return httpfs_rmdir(location.id, location.subpath);
+  } else if(fs_mounts[idx].type == "procfs") {
+    return procfs_rmdir(location.id, location.subpath);
+  }
+  
+  return null;
+}
+
 function fs_create(file) {
   var location = fs_find(file); //fs_find will work even with a non-existent file on the end
   if(location == null) { return null; }
@@ -189,6 +206,22 @@ function fs_create(file) {
     return httpfs_create(location.id, location.subpath);
   } else if(fs_mounts[idx].type == "procfs") {
     return procfs_create(location.id, location.subpath);
+  }
+  
+  return null;
+}
+
+function fs_remove(file) {
+  var location = fs_find(file);
+  if(location == null) { return null; }
+  var idx = fs_get_index(location.id);
+  
+  if(fs_mounts[idx].type == "tmpfs") {
+    return tmpfs_remove(location.id, location.subpath);
+  } else if(fs_mounts[idx].type == "httpfs") {
+    return httpfs_remove(location.id, location.subpath);
+  } else if(fs_mounts[idx].type == "procfs") {
+    return procfs_remove(location.id, location.subpath);
   }
   
   return null;

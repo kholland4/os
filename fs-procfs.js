@@ -128,6 +128,14 @@ function procfs_mkdir(id, file) {
   return false;
 }
 
+function procfs_rmdir(id, file) {
+  return false;
+}
+
 function procfs_create(id, file) {
+  return false;
+}
+
+function procfs_remove(id, file) {
   return false;
 }

@@ -159,6 +159,33 @@ function tmpfs_mkdir(id, file) {
   return true;
 }
 
+function tmpfs_rmdir(id, file) {
+  if(!tmpfs_exists(id, file)) { return null; }
+  if(!tmpfs_isdir(id, file)) { return false; }
+  
+  var o = file.lastIndexOf("/");
+  if(o == -1) { return null; }
+  var dirname = file.substring(o + 1);
+  file = file.substring(0, o);
+  if(file == "") { file = "/"; }
+  
+  var f = tmpfs_get_file(id, file);
+  if(f == null) { return null; }
+  if(f.type != "dir") { return null; }
+  
+  for(var i = 0; i < f.data.length; i++) {
+    if(f.data[i].name == dirname) {
+      if(f.data[i].data.length == 0) { //tmpfs CAN remove full directories but most FSes can't
+        f.data.splice(i, 1);
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
 function tmpfs_create(id, file) {
   if(tmpfs_exists(id, file)) { return false; }
   
@@ -174,4 +201,27 @@ function tmpfs_create(id, file) {
   
   f.data.push({name: fileNew, type: "file", data: ""});
   return true;
+}
+
+function tmpfs_remove(id, file) {
+  if(!tmpfs_exists(id, file)) { return null; }
+  if(tmpfs_isdir(id, file)) { return false; } //tmpfs CAN remove whole directories but most FSes can't
+  
+  var o = file.lastIndexOf("/");
+  if(o == -1) { return null; }
+  var fileNew = file.substring(o + 1);
+  file = file.substring(0, o);
+  if(file == "") { file = "/"; }
+  
+  var f = tmpfs_get_file(id, file);
+  if(f == null) { return null; }
+  if(f.type != "dir") { return null; }
+  
+  for(var i = 0; i < f.data.length; i++) {
+    if(f.data[i].name == fileNew) {
+      f.data.splice(i, 1);
+      return true;
+    }
+  }
+  return false;
 }

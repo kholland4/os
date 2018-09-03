@@ -139,6 +139,28 @@ function init() {
     fs_close(tfd);\n\
   }\n\
 }\n"); fs_close(fd);
+  fs_create("/bin/rm"); var fd = fs_open("/bin/rm"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  if(args.length == 2) {\n\
+    var target = shell_process_relative(ENV_CWD, args[1]);\n\
+    if(!fs_exists(target)) {\n\
+      syscall_pipe_write(stderr, \"rm: cannot remove '\" + target + \"': No such file or directory\\n\");\n\
+      return;\n\
+    }\n\
+    if(fs_remove(target) != true) {\n\
+      syscall_pipe_write(stderr, \"rm: cannot remove '\" + target + \"': Access denied\\n\");\n\
+    }\n\
+  }\n}\n"); fs_close(fd); //TODO: better error messages
+  fs_create("/bin/rmdir"); var fd = fs_open("/bin/rmdir"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  if(args.length == 2) {\n\
+    var target = shell_process_relative(ENV_CWD, args[1]);\n\
+    if(!fs_exists(target)) {\n\
+      syscall_pipe_write(stderr, \"rmdir: failed to remove '\" + target + \"': No such file or directory\\n\");\n\
+      return;\n\
+    }\n\
+    if(fs_rmdir(target) != true) {\n\
+      syscall_pipe_write(stderr, \"rmdir: failed to remove '\" + target + \"': Access denied\\n\");\n\
+    }\n\
+  }\n}\n"); fs_close(fd); //TODO: better error messages
   
   fs_mkdir("/usr"); fs_mkdir("/usr/bin");
   fs_create("/usr/bin/which"); var fd = fs_open("/usr/bin/which"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
@@ -168,14 +190,15 @@ function init() {
       syscall_pipe_write(stderr, \"touch: cannot touch '\" + target + \"': No such file or directory\\n\");\n\
     }\n\
   }\n\}\n"); fs_close(fd);
-  //TODO: head, tail, cp, mv, rm, rmdir, echo
+  //TODO: head, tail, mv, echo, more, less (?)
   
   fs_mkdir("/web");
   fs_mount("/web", "httpfs", {url: "/os/httpfs"});
   
   //copy shell to root fs
-  var fd = fs_open("/web/shell.js"); var data = syscall_fd_read(fd, syscall_fd_info(fd).size); fs_close(fd);
-  fs_create("/bin/shell"); var fd = fs_open("/bin/shell"); syscall_fd_write(fd, data); fs_close(fd);
+  //var fd = fs_open("/web/shell.js"); var data = syscall_fd_read(fd, syscall_fd_info(fd).size); fs_close(fd);
+  //fs_create("/bin/shell"); var fd = fs_open("/bin/shell"); syscall_fd_write(fd, data); fs_close(fd);
+  syscall_run(["/bin/cp", "/web/shell.js", "/bin/shell"], null, null, null);
   
   fs_mkdir("/proc");
   fs_mount("/proc", "procfs", {});

@@ -87,6 +87,14 @@ function templatefs_mkdir(id, file) {
   return false;
 }
 
+function templatefs_rmdir(id, file) {
+  return false;
+}
+
 function templatefs_create(id, file) {
+  return false;
+}
+
+function templatefs_remove(id, file) {
   return false;
 }

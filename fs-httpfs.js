@@ -2,6 +2,7 @@ var httpfs_fs = [];
 var httpfs_file_cache = [];
 
 function httpfs_mount(id, params) {
+  if(params.url.endsWith("/")) { params.url = params.url.substring(0, params.url.length - 1); }
   httpfs_fs.push({id: id, url: params.url});
 }
 
@@ -138,6 +139,14 @@ function httpfs_mkdir(id, file) {
   return false;
 }
 
+function httpfs_rmdir(id, file) {
+  return false;
+}
+
 function httpfs_create(id, file) {
+  return false;
+}
+
+function httpfs_remove(id, file) {
   return false;
 }
