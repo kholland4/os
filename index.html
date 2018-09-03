@@ -171,7 +171,7 @@ function init() {
   //TODO: head, tail, cp, mv, rm, rmdir, echo
   
   fs_mkdir("/web");
-  fs_mount("/web", "httpfs", {url: "/html/os/httpfs"});
+  fs_mount("/web", "httpfs", {url: "/os/httpfs"});
   
   //copy shell to root fs
   var fd = fs_open("/web/shell.js"); var data = syscall_fd_read(fd, syscall_fd_info(fd).size); fs_close(fd);
