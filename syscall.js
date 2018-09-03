@@ -24,11 +24,13 @@ function syscall_pipe_get_index(id) {
 }
 
 function syscall_pipe_destroy(id) {
+  if(id == null) { return; }
   var idx = syscall_pipe_get_index(id);
   syscall_pipe.splice(idx, 1);
 }
 
 function syscall_pipe_write(id, data) {
+  if(id == null) { return; }
   var idx = syscall_pipe_get_index(id);
   if(syscall_pipe[idx].target != null) {
     syscall_pipe[idx].target(data);
@@ -36,21 +38,25 @@ function syscall_pipe_write(id, data) {
 }
 
 function syscall_pipe_bind_read(id, callback) {
+  if(id == null) { return; }
   var idx = syscall_pipe_get_index(id);
   syscall_pipe[idx].target = callback;
 }
 
 function syscall_pipe_unbind_read(id) {
+  if(id == null) { return; }
   var idx = syscall_pipe_get_index(id);
   syscall_pipe[idx].target = null;
 }
 
 function syscall_pipe_info(id) {
+  if(id == null) { return; }
   var idx = syscall_pipe_get_index(id);
   return syscall_pipe[idx].info;
 }
 
 function syscall_pipe_set_info(id, info) {
+  if(id == null) { return; }
   var idx = syscall_pipe_get_index(id);
   syscall_pipe[idx].info = info;
 }
