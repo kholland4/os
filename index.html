@@ -8,6 +8,8 @@
 <script src="fs-procfs.js" type="text/javascript"></script>
 <script src="terminal.js" type="text/javascript"></script>
 <link rel="stylesheet" type="text/css" href="terminal.css">
+<script src="gfx.js" type="text/javascript"></script>
+<link rel="stylesheet" type="text/css" href="gfx.css">
 <style>
 body {
   margin: 0px;
@@ -15,6 +17,8 @@ body {
   padding: 0px;
   
   overflow: hidden;
+  
+  font-size: 0px; /* remove space at bottom of page */
 }
 </style>
 <script>
@@ -23,11 +27,21 @@ function init() {
   var stdout = syscall_pipe_create();
   var stderr = syscall_pipe_create();
   terminal_attach(document.getElementById("vt1"), stdin, stdout, stderr);
+  document.getElementById("vt1").style.width = (window.innerWidth / 2).toString() + "px";
+  document.getElementById("vt1").style.display = "inline-block";
   //shell_create(stdin, stdout, stderr);
   
+  var gfx_id = gfx_create(document.getElementById("gfx"), window.innerWidth / 2, window.innerHeight);
+  
+  //syscall_pipe_write(stderr, "loading root fs...");
+  //force redraw
+  //document.body.style.display = "none";
+  //document.body.style.display = "block";
+  
   fs_mount("/", "tmpfs", {});
-  fs_create("/test.txt"); var fd = fs_open("/test.txt"); syscall_fd_write(fd, "hello! this is a test.\n"); fs_close(fd);
-  fs_create("/test"); var fd = fs_open("/test"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) { syscall_pipe_write(stdout, 'This is a test program.\\n'); }\n"); fs_close(fd);
+  fs_mkdir("/home");
+  fs_create("/home/test.txt"); var fd = fs_open("/home/test.txt"); syscall_fd_write(fd, "hello! this is a test.\n"); fs_close(fd);
+  fs_create("/home/test"); var fd = fs_open("/home/test"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) { syscall_pipe_write(stdout, 'This is a test program.\\n'); }\n"); fs_close(fd);
   
   fs_mkdir("/bin");
   fs_create("/bin/pwd"); var fd = fs_open("/bin/pwd"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
@@ -149,7 +163,7 @@ function init() {
     if(fs_remove(target) != true) {\n\
       syscall_pipe_write(stderr, \"rm: cannot remove '\" + target + \"': Access denied\\n\");\n\
     }\n\
-  }\n}\n"); fs_close(fd); //TODO: better error messages
+  }\n}\n"); fs_close(fd); //TODO: better error messages; iterate thru all args
   fs_create("/bin/rmdir"); var fd = fs_open("/bin/rmdir"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
   if(args.length == 2) {\n\
     var target = shell_process_relative(ENV_CWD, args[1]);\n\
@@ -160,7 +174,7 @@ function init() {
     if(fs_rmdir(target) != true) {\n\
       syscall_pipe_write(stderr, \"rmdir: failed to remove '\" + target + \"': Access denied\\n\");\n\
     }\n\
-  }\n}\n"); fs_close(fd); //TODO: better error messages
+  }\n}\n"); fs_close(fd); //TODO: better error messages; iterate thru all args
   
   fs_mkdir("/usr"); fs_mkdir("/usr/bin");
   fs_create("/usr/bin/which"); var fd = fs_open("/usr/bin/which"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
@@ -195,20 +209,28 @@ function init() {
   fs_mkdir("/web");
   fs_mount("/web", "httpfs", {url: "/os/httpfs"});
   
-  //copy shell to root fs
-  //var fd = fs_open("/web/shell.js"); var data = syscall_fd_read(fd, syscall_fd_info(fd).size); fs_close(fd);
-  //fs_create("/bin/shell"); var fd = fs_open("/bin/shell"); syscall_fd_write(fd, data); fs_close(fd);
-  syscall_run(["/bin/cp", "/web/shell.js", "/bin/shell"], null, null, null);
+  fs_mkdir("/lib");
+  
+  syscall_run(["/bin/cp", "/web/shell.js", "/bin/shell"], null, null, null); //copy shell to root fs
+  syscall_run(["/bin/cp", "/web/libwm.js", "/lib/libwm"], null, null, null); //copy libwm to root fs
+  syscall_run(["/bin/cp", "/web/wm.js", "/usr/bin/wm"], null, null, null); //copy wm to root fs
+  syscall_run(["/bin/cp", "/web/term.js", "/usr/bin/term"], null, null, null); //copy term to root fs
   
   fs_mkdir("/proc");
   fs_mount("/proc", "procfs", {});
   
+  //syscall_pipe_write(stderr, "done\n");
+  
+  ENV_CWD = "/home";
   syscall_run(["/bin/shell"], stdin, stdout, stderr);
+  syscall_run(["/usr/bin/wm"], stdin, stdout, stderr);
+  syscall_run(["/usr/bin/term"], stdin, stdout, stderr);
 }
 document.addEventListener("DOMContentLoaded", init);
 </script>
 </head>
-<body>
-<div class="terminal" id="vt1"></div>
-</body>
-</html>
+<body><!--
+--><div class="terminal" id="vt1"></div><!--
+--><canvas class="gfx" id="gfx"></canvas><!--
+--></body><!--
+--></html>

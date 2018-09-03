@@ -172,6 +172,14 @@ function syscall_run(args, stdin, stdout, stderr) {
   prog(args, stdin, stdout, stderr);
 }
 
+function syscall_loadlib(file) {
+  var fd = fs_open(file);
+  var progRaw = syscall_fd_read(fd, syscall_fd_info(fd).size);
+  fs_close(fd);
+  
+  eval.call(window, progRaw);
+}
+
 //-----MISC-----
 var ENV_CWD = "/";
 var ENV_PATH = ["/bin", "/usr/bin"];
