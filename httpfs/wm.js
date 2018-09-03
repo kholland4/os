@@ -3,6 +3,9 @@ function(args, stdin, stdout, stderr) {
   
   var BORDER_SIZE = 3;
   var BAR_SIZE = 20;
+  var BUTTON_SIZE_X = 20;
+  var BUTTON_SIZE_Y = 15;
+  var BUTTON_COUNT = 1;
   
   syscall_loadlib("/lib/libwm");
   var gfx_id;
@@ -50,7 +53,7 @@ function(args, stdin, stdout, stderr) {
   gfx_bind_mousedown(gfx_id, function(x, y) {
     var win = libwm_windows;
     var hitWin = false;
-    for(var i = 0; i < win.length; i++) {
+    for(var i = win.length - 1; i >= 0; i--) { //count in reverse to work with libwm_destroy
       var size = gfx_get_size(win[i].id);
       if(x >= win[i].x && x < win[i].x + size.width && y >= win[i].y && y < win[i].y + size.height) {
         gfx_trigger_mousedown(win[i].id, x - win[i].x, y - win[i].y);
@@ -60,19 +63,26 @@ function(args, stdin, stdout, stderr) {
           win[n].focus = false;
         }
         win[i].focus = true;
-      } else if(x >= win[i].x - BORDER_SIZE && x < win[i].x + size.width + (BORDER_SIZE * 2) && y >= win[i].y - BAR_SIZE && y < win[i].y) {
-        //on bar
-        winSelID = win[i].id;
-        winSelPos = {
-          x: win[i].x - x,
-          y: win[i].y - y
-        };
-        
-        for(var n = 0; n < win.length; n++) {
-          win[n].focus = false;
+      } else if(x >= win[i].x - BORDER_SIZE && x < win[i].x + size.width + BORDER_SIZE && y >= win[i].y - BAR_SIZE && y < win[i].y) {
+        //buttons?
+        if(x >= win[i].x + size.width - (BUTTON_SIZE_X * BUTTON_COUNT) && x < win[i].x + size.width && y >= win[i].y - BAR_SIZE && y < win[i].y + BUTTON_SIZE_Y) {
+          //buttons
+          //TOOD: multi-button support
+          libwm_destroy(win[i].id);
+        } else {
+          //on bar
+          winSelID = win[i].id;
+          winSelPos = {
+            x: win[i].x - x,
+            y: win[i].y - y
+          };
+          
+          for(var n = 0; n < win.length; n++) {
+            win[n].focus = false;
+          }
+          win[i].focus = true;
+          hitWin = true;
         }
-        win[i].focus = true;
-        hitWin = true;
       }
     }
     
@@ -114,6 +124,11 @@ function(args, stdin, stdout, stderr) {
       //border
       var color = "#3333FF"; if(!win[i].focus) { color = "#7777FF"; }
       gfx_fillrect(gfx_id, win[i].x - BORDER_SIZE, win[i].y - BAR_SIZE, size.width + (BORDER_SIZE * 2), size.height + (BORDER_SIZE + BAR_SIZE), color);
+      
+      //close button
+      var color = "#FF3333"; if(!win[i].focus) { color = "#FF7777"; }
+      gfx_fillrect(gfx_id, win[i].x + size.width - BUTTON_SIZE_X, win[i].y - BAR_SIZE, BUTTON_SIZE_X, BUTTON_SIZE_Y, color);
+      
       gfx_copy(gfx_id, win[i].id, win[i].x, win[i].y);
     }
   }, 30);

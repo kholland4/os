@@ -14,9 +14,10 @@ function libwm_create(width, height) {
   return id;
 }
 
-function libwm_destory(id) {
+function libwm_destroy(id) {
   for(var i = 0; i < libwm_windows.length; i++) {
     if(libwm_windows[i].id == id) {
+      //TODO: terminate (?) running process
       gfx_destroy(libwm_windows[i].id);
       libwm_windows.splice(i, 1);
       return;
