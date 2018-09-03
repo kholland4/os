@@ -1,0 +1,11 @@
+.terminal {
+  background-color: black;
+  color: white;
+  font-family: monospace;
+  font-size: 10pt;
+  
+  white-space: pre-wrap;
+  overflow-y: auto;
+  
+  outline: none;
+}

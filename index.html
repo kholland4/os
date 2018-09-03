@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="syscall.js" type="text/javascript"></script>
+<script src="fs-core.js" type="text/javascript"></script>
+<script src="fs-tmpfs.js" type="text/javascript"></script>
+<script src="fs-httpfs.js" type="text/javascript"></script>
+<script src="fs-procfs.js" type="text/javascript"></script>
+<script src="terminal.js" type="text/javascript"></script>
+<link rel="stylesheet" type="text/css" href="terminal.css">
+<style>
+body {
+  margin: 0px;
+  border: 0px;
+  padding: 0px;
+  
+  overflow: hidden;
+}
+</style>
+<script>
+function init() {
+  var stdin = syscall_pipe_create();
+  var stdout = syscall_pipe_create();
+  var stderr = syscall_pipe_create();
+  terminal_attach(document.getElementById("vt1"), stdin, stdout, stderr);
+  //shell_create(stdin, stdout, stderr);
+  
+  fs_mount("/", "tmpfs", {});
+  fs_create("/test.txt"); var fd = fs_open("/test.txt"); syscall_fd_write(fd, "hello! this is a test.\n"); fs_close(fd);
+  fs_create("/test"); var fd = fs_open("/test"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) { syscall_pipe_write(stdout, 'This is a test program.\\n'); }\n"); fs_close(fd);
+  
+  fs_mkdir("/bin");
+  fs_create("/bin/pwd"); var fd = fs_open("/bin/pwd"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  syscall_pipe_write(stdout, ENV_CWD + '\\n');\n\
+}\n"); fs_close(fd);
+  fs_create("/bin/cat"); var fd = fs_open("/bin/cat"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  if(args.length < 2) { return; }\n\
+  for(var i = 1; i < args.length; i++) {\n\
+    var file = shell_process_relative(ENV_CWD, args[i]);\n\
+    if(!fs_exists(file)) {\n\
+      syscall_pipe_write(stderr, \"cat: \" + file + \": No such file or directory\\n\");\n\
+    }\n\
+    if(fs_isdir(file)) {\n\
+      syscall_pipe_write(stderr, \"cat: \" + file + \": Is a directory\\n\");\n\
+    }\n\
+    var fd = fs_open(file);\n\
+    if(fd != null) {\n\
+      var data = syscall_fd_read(fd, syscall_fd_info(fd).size);\n\
+      fs_close(fd);\n\
+      syscall_pipe_write(stdout, data);\n\
+    }\n\
+  }\n\}\n"); fs_close(fd);
+  fs_create("/bin/ls"); var fd = fs_open("/bin/ls"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  var target = ENV_CWD;\n\
+  if(args.length == 2) {\n\
+    target = shell_process_relative(ENV_CWD, args[1]);\n\
+  }\n\
+  if(fs_isdir(target)) {\n\
+    var data = fs_ls(target);\n\
+    if(data != null) {\n\
+      data.sort();\n\
+      for(var i = 0; i < data.length; i++) {\n\
+        syscall_pipe_write(stdout, data[i] + '\\n');\n\
+      }\n\
+    }\n\
+  } else {\n\
+    syscall_pipe_write(stderr, \"ls: \" + target + \": Not a directory\\n\");\n\
+  }\n}\n"); fs_close(fd); //FIXME - give "no such file or directory" if it doesn't exist and "not a directory" if it's not a directory (or iter thru and print args like actual ls does?
+  fs_create("/bin/mkdir"); var fd = fs_open("/bin/mkdir"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  if(args.length == 2) {\n\
+    var target = shell_process_relative(ENV_CWD, args[1]);\n\
+    if(fs_exists(target)) {\n\
+      syscall_pipe_write(stderr, \"mkdir: cannot create directory '\" + target + \"': File exists\\n\");\n\
+      return;\n\
+    }\n\
+    if(fs_mkdir(target) != true) {\n\
+      syscall_pipe_write(stderr, \"mkdir: cannot create directory '\" + target + \"': No such file or directory\\n\");\n\
+    }\n\
+  }\n}\n"); fs_close(fd); //TODO: false -> access denied/etc.?
+  fs_create("/bin/mount"); var fd = fs_open("/bin/mount"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  if(args.length != 3 && args.length != 4) { return; }\n\
+  \n\
+  var target = shell_process_relative(ENV_CWD, args[1]);\n\
+  if(!fs_exists(target)) { syscall_pipe_write(stderr, \"mount: mount point \" + target + \" does not exist\\n\"); return; }\n\
+  if(!fs_isdir(target)) { syscall_pipe_write(stderr, \"mount: mount point \" + target + \" is not a directory\\n\"); return; }\n\
+  \n\
+  var type = args[2];\n\
+  \n\
+  var opts = {};\n\
+  if(args.length >= 4) {\n\
+    var props = args[3].trim().split(\",\");\n\
+    for(var i = 0; i < props.length; i++) {\n\
+      var idx = props[i].indexOf(\"=\");\n\
+      if(idx != -1) { //TODO: value-less props\n\
+        var key = props[i].substring(0, idx).trim();\n\
+        var value = props[i].substring(idx + 1).trim();\n\
+        if(key.length > 0 && value.length > 0) {\n\
+          opts[key] = value;\n\
+        }\n\
+      }\n\
+    }\n\
+  }\n\
+  \n\
+  fs_mount(target, type, opts);\n\
+}\n"); fs_close(fd); //TODO: options; already-mounted locations
+  fs_create("/bin/umount"); var fd = fs_open("/bin/umount"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  if(args.length != 2) { return; }\n\
+  \n\
+  var target = shell_process_relative(ENV_CWD, args[1]);\n\
+  //if(!fs_exists(target)) { syscall_pipe_write(stderr, \"umount: \" + target + \": No such file or directory\\n\"); return; }\n\
+  \n\
+  fs_umount(target);\n\
+}\n"); fs_close(fd); //TODO: error messages
+  fs_create("/bin/cp"); var fd = fs_open("/bin/cp"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  if(args.length != 3) { return; }\n\
+  \n\
+  var sFile = shell_process_relative(ENV_CWD, args[1]);\n\
+  if(!fs_exists(sFile)) {\n\
+    syscall_pipe_write(stderr, \"cp: \" + sFile + \": No such file or directory\\n\");\n\
+    return;\n\
+  }\n\
+  if(fs_isdir(sFile)) {\n\
+    syscall_pipe_write(stderr, \"cp: \" + sFile + \": Is a directory\\n\");\n\
+    return;\n\
+  }\n\
+  \n\
+  var tFile = shell_process_relative(ENV_CWD, args[2]);\n\
+  if(fs_exists(tFile)) {\n\
+    syscall_pipe_write(stderr, \"cp: \" + tFile + \": File exists\\n\");\n\
+  }\n\
+  \n\
+  var sfd = fs_open(sFile);\n\
+  fs_create(tFile);\n\
+  var tfd = fs_open(tFile);\n\
+  if(sfd != null && tfd != null) {\n\
+    var data = syscall_fd_read(sfd, syscall_fd_info(sfd).size);\n\
+    fs_close(sfd);\n\
+    syscall_fd_write(tfd, data);\n\
+    fs_close(tfd);\n\
+  }\n\
+}\n"); fs_close(fd);
+  
+  fs_mkdir("/usr"); fs_mkdir("/usr/bin");
+  fs_create("/usr/bin/which"); var fd = fs_open("/usr/bin/which"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  if(args.length == 2) {\n\
+    var file = args[1];\n\
+    if(file.indexOf('/') == -1) {\n\
+      for(var i = 0; i < ENV_PATH.length; i++) {\n\
+        if(fs_exists(ENV_PATH[i] + '/' + file)) {\n\
+          syscall_pipe_write(stdout, ENV_PATH[i] + '/' + file + '\\n');\n\
+        }\n\
+      }\n\
+    } else {\n\
+      for(var i = 0; i < ENV_PATH.length; i++) {\n\
+        if(file.startsWith(ENV_PATH[i] + '/') && fs_exists(file)) {\n\
+          syscall_pipe_write(stdout, file + '\\n');\n\
+        }\n\
+      }\n\
+    }\n\
+  }\n}\n"); fs_close(fd);
+  fs_create("/usr/bin/touch"); var fd = fs_open("/usr/bin/touch"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  if(args.length == 2) {\n\
+    var target = shell_process_relative(ENV_CWD, args[1]);\n\
+    var res = fs_create(target);\n\
+    if(res != null) { //succcess or exists\n\
+      \n\
+    } else {\n\
+      syscall_pipe_write(stderr, \"touch: cannot touch '\" + target + \"': No such file or directory\\n\");\n\
+    }\n\
+  }\n\}\n"); fs_close(fd);
+  //TODO: head, tail, cp, mv, rm, rmdir, echo
+  
+  fs_mkdir("/web");
+  fs_mount("/web", "httpfs", {url: "/html/os/httpfs"});
+  
+  //copy shell to root fs
+  var fd = fs_open("/web/shell.js"); var data = syscall_fd_read(fd, syscall_fd_info(fd).size); fs_close(fd);
+  fs_create("/bin/shell"); var fd = fs_open("/bin/shell"); syscall_fd_write(fd, data); fs_close(fd);
+  
+  fs_mkdir("/proc");
+  fs_mount("/proc", "procfs", {});
+  
+  syscall_run(["/bin/shell"], stdin, stdout, stderr);
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</head>
+<body>
+<div class="terminal" id="vt1"></div>
+</body>
+</html>
