@@ -1,4 +1,5 @@
 var gfx_ctx = [];
+var gfx_data = [];
 
 function gfx_create(canvas, width, height) {
   var ctx = canvas.getContext("2d", {alpha: false});
@@ -11,6 +12,7 @@ function gfx_create(canvas, width, height) {
   terminal_tabindex_next++;
   
   gfx_ctx.push(ctx);
+  gfx_data.push({});
   return gfx_ctx.length - 1;
 }
 
@@ -21,6 +23,7 @@ function gfx_create_buffer(width, height) {
   ctx.canvas.height = height;
   
   gfx_ctx.push(ctx);
+  gfx_data.push({});
   return gfx_ctx.length - 1;
 }
 
@@ -31,12 +34,23 @@ function gfx_resize(id, width, height) {
 }
 
 function gfx_destroy(id) {
+  if("intervals" in gfx_data[id]) {
+    for(var i = 0; i < gfx_data[id].intervals.length; i++) {
+      clearInterval(gfx_data[id].intervals[i]);
+    }
+  }
+  gfx_data[id] = null;
   gfx_ctx[id] = null;
 }
 
 function gfx_get_default() {
   if(gfx_ctx.length == 0) { return null; }
   return 0;
+}
+
+function gfx_register_interval(id, intid) {
+  if(!("intervals" in gfx_data[id])) { gfx_data[id].intervals = []; }
+  gfx_data[id].intervals.push(intid);
 }
 
 function gfx_get_size(id) {
