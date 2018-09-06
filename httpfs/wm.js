@@ -53,7 +53,8 @@ function(args, stdin, stdout, stderr) {
   gfx_bind_mousedown(gfx_id, function(x, y) {
     var win = libwm_windows;
     var hitWin = false;
-    for(var i = win.length - 1; i >= 0; i--) { //count in reverse to work with libwm_destroy
+    var toDestroy = [];
+    for(var i = 0; i < win.length; i++) {
       var size = gfx_get_size(win[i].id);
       if(x >= win[i].x && x < win[i].x + size.width && y >= win[i].y && y < win[i].y + size.height) {
         gfx_trigger_mousedown(win[i].id, x - win[i].x, y - win[i].y);
@@ -68,7 +69,8 @@ function(args, stdin, stdout, stderr) {
         if(x >= win[i].x + size.width - (BUTTON_SIZE_X * BUTTON_COUNT) && x < win[i].x + size.width && y >= win[i].y - BAR_SIZE && y < win[i].y + BUTTON_SIZE_Y) {
           //buttons
           //TOOD: multi-button support
-          libwm_destroy(win[i].id);
+          //libwm_destroy(win[i].id);
+          toDestroy.push(i);
         } else {
           //on bar
           winSelID = win[i].id;
@@ -86,10 +88,28 @@ function(args, stdin, stdout, stderr) {
       }
     }
     
+    //destroy closed window(s)
+    for(var i = toDestroy.length - 1; i >= 0; i--) {
+      libwm_destroy(win[toDestroy[i]].id);
+    }
+    
     if(!hitWin) {
-      for(var n = 0; n < win.length; n++) {
-        win[n].focus = false;
+      for(var i = 0; i < win.length; i++) {
+        win[i].focus = false;
       }
+    }
+    
+    //move focused window to the top
+    var toFocus = null;
+    for(var i = 0; i < libwm_windows.length; i++) {
+      if(libwm_windows[i].focus) {
+        toFocus = i;
+      }
+    }
+    if(toFocus != null) {
+      var w = libwm_windows[toFocus];
+      libwm_windows.splice(toFocus, 1);
+      libwm_windows.push(w);
     }
   });
   
