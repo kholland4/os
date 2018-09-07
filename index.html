@@ -210,9 +210,10 @@ function init() {
   fs_mount("/web", "httpfs", {url: "/os/httpfs"});
   
   fs_mkdir("/lib");
+  fs_mkdir("/usr/lib");
   
   syscall_run(["/bin/cp", "/web/shell.js", "/bin/shell"], null, null, null); //copy shell to root fs
-  syscall_run(["/bin/cp", "/web/libwm.js", "/lib/libwm"], null, null, null); //copy libwm to root fs
+  syscall_run(["/bin/cp", "/web/libwm.js", "/usr/lib/libwm"], null, null, null); //copy libwm to root fs
   syscall_run(["/bin/cp", "/web/wm.js", "/usr/bin/wm"], null, null, null); //copy wm to root fs
   syscall_run(["/bin/cp", "/web/term.js", "/usr/bin/term"], null, null, null); //copy term to root fs
   

@@ -1,5 +1,5 @@
 function(args, stdin, stdout, stderr) {
-  //TODO: dynamic stacking - reorder libwm_windows?
+  //TODO: fix ability to use mouse through other windows
   
   var BORDER_SIZE = 3;
   var BAR_SIZE = 20;
@@ -7,7 +7,7 @@ function(args, stdin, stdout, stderr) {
   var BUTTON_SIZE_Y = 15;
   var BUTTON_COUNT = 1;
   
-  syscall_loadlib("/lib/libwm");
+  syscall_loadlib("/usr/lib/libwm");
   var gfx_id;
   if(args.length >= 2) {
     if(args[1] == "window") {
