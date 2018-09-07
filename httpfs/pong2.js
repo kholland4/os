@@ -15,7 +15,9 @@ function(args, stdin, stdout, stderr) {
   
   var paddles = [
     {x: 30, y: 210, w: 10, h: 60, sx: 0, sy: 0, vert: true, orient: 1},
-    {x: 600, y: 210, w: 10, h: 60, sx: 0, sy: 0, vert: true, orient: -1}
+    {x: 600, y: 210, w: 10, h: 60, sx: 0, sy: 0, vert: true, orient: -1},
+    {x: 290, y: 30, w: 60, h: 10, sx: 0, sy: 0, vert: false, orient: 1},
+    {x: 290, y: 440, w: 60, h: 10, sx: 0, sy: 0, vert: false, orient: -1}
   ];
   var ball = { x: 310, y: 230, w: 20, h: 20 };
   var ballSpeed = { x: 1, y: 1 };
@@ -60,6 +62,24 @@ function(args, stdin, stdout, stderr) {
       paddles[1].sy = -MAX_SPEED;
     } else {
       paddles[1].sy = 0;
+    }
+    
+    var target = (ball.x + (ball.w / 2)) - (paddles[2].w / 2);
+    if(paddles[2].x <= target - MAX_SPEED) {
+      paddles[2].sx = MAX_SPEED;
+    } else if(paddles[2].x >= target + MAX_SPEED) {
+      paddles[2].sx = -MAX_SPEED;
+    } else {
+      paddles[2].sx = 0;
+    }
+    
+    var target = (ball.x + (ball.w / 2)) - (paddles[3].w / 2);
+    if(paddles[3].x <= target - MAX_SPEED) {
+      paddles[3].sx = MAX_SPEED;
+    } else if(paddles[3].x >= target + MAX_SPEED) {
+      paddles[3].sx = -MAX_SPEED;
+    } else {
+      paddles[3].sx = 0;
     }
     
     //motion
