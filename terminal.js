@@ -52,7 +52,8 @@ function terminal_attach(term, stdin, stdout, stderr) {
     } else if(e.charCode != 0) {
       syscall_pipe_write(stdin, String.fromCharCode(e.charCode)); //FIXME - docs say e.char should be used https://developer.mozilla.org/en-US/docs/Web/Events/keypress
     }
-    //TODO: delete, home, end, etc.? or in shell?
+    //TODO: delete, home, end, etc.
+    //TODO: u/d/l/r arrows
   });
   term.focus();
 }
