@@ -4,12 +4,17 @@ if(typeof libwm_windows === "undefined") { //don't reset libwm_windows when libw
 }
 
 function libwm_create(width, height) {
+  //unfocus all
+  for(var i = 0; i < libwm_windows.length; i++) {
+    libwm_windows[i].focus = false;
+  }
+  
   var id = gfx_create_buffer(width, height);
   libwm_windows.push({
     id: id,
     x: 50,
     y: 50,
-    focus: false,
+    focus: true
   });
   return id;
 }
@@ -23,4 +28,13 @@ function libwm_destroy(id) {
       return;
     }
   }
+}
+
+function libwm_get(id) {
+  for(var i = 0; i < libwm_windows.length; i++) {
+    if(libwm_windows[i].id == id) {
+      return libwm_windows[i];
+    }
+  }
+  return null;
 }
