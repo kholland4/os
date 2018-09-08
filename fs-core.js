@@ -1,4 +1,3 @@
-//TODO: truncate
 //TODO: rename/move
 //TODO: delete
 //TODO: fs-devtmpfs.js

@@ -74,7 +74,8 @@ function syscall_fd_create() {
     info: {},
     read: null,
     write: null,
-    seek: null
+    seek: null,
+    truncate: null
   };
   syscall_fd.push(data);
   syscall_fd_next++;
@@ -146,6 +147,24 @@ function syscall_fd_seek(id, pos) {
   var idx = syscall_fd_get_index(id);
   if(syscall_fd[idx].seek != null) {
     syscall_fd[idx].seek(id, pos);
+  }
+}
+
+//truncate
+function syscall_fd_bind_truncate(id, callback) {
+  var idx = syscall_fd_get_index(id);
+  syscall_fd[idx].truncate = callback;
+}
+
+function syscall_fd_unbind_truncate(id) {
+  var idx = syscall_fd_get_index(id);
+  syscall_fd[idx].truncate = null;
+}
+
+function syscall_fd_truncate(id, len) {
+  var idx = syscall_fd_get_index(id);
+  if(syscall_fd[idx].truncate != null) {
+    syscall_fd[idx].truncate(id, len);
   }
 }
 

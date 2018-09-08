@@ -76,6 +76,10 @@ function templatefs_open(id, file, params) {
     syscall_fd_set_info(fd, info);
   });
   
+  syscall_fd_bind_truncate(fd, function(fd, data) {
+    return false;
+  });
+  
   return fd;
 }
 

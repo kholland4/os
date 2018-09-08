@@ -137,6 +137,27 @@ function tmpfs_open(id, file, params) {
     syscall_fd_set_info(fd, info);
   });
   
+  syscall_fd_bind_truncate(fd, function(fd, len) {
+    var info = syscall_fd_info(fd);
+    var f = tmpfs_get_file(info.fsid, info.file);
+    if(f == null) { return null; }
+    if(f.type != "file") { return null; }
+    
+    if(len > info.size) {
+      return false;
+    } else {
+      f.data = f.data.substring(0, len);
+    }
+    
+    if(info.pos > len) {
+      info.pos = len;
+    }
+    
+    info.size = f.data.length;
+    syscall_fd_set_info(fd, info);
+    return true;
+  });
+  
   return fd;
 }
 
