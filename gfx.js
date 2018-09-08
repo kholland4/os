@@ -123,13 +123,13 @@ function gfx_trigger_mousemove(id, x, y) {
 
 function gfx_bind_keypress(id, callback) {
   var ctx = gfx_ctx[id];
-  ctx.canvas.onkeypress = callback;
+  ctx.canvas.onkeydown = callback;
 }
 
 function gfx_trigger_keypress(id, e) {
   var ctx = gfx_ctx[id];
-  if(ctx.canvas.onkeypress == null) { return; }
-  ctx.canvas.onkeypress(e);
+  if(ctx.canvas.onkeydown == null) { return; }
+  ctx.canvas.onkeydown(e);
 }
 
 function gfx_fillrect(id, x, y, w, h, color) {

@@ -62,7 +62,7 @@ function(args, stdin, stdout, stderr) {
   
   gfx_bind_keypress(gfx_id, function(e) {
     //prevent Firefox quick find - https://greasyfork.org/en/scripts/13484-prevent-slash-opening-quickfind
-    if(e.charCode == 47 || e.charCode == 39) {
+    if(e.key == "/" || e.key == "'") {
       e.preventDefault();
     }
     //capture tab
@@ -76,10 +76,10 @@ function(args, stdin, stdout, stderr) {
       syscall_pipe_write(stdin, "\b");
     } else if(e.keyCode == 9) { //tab
       syscall_pipe_write(stdin, "\t");
-    } else if(e.charCode != 0) {
-      syscall_pipe_write(stdin, String.fromCharCode(e.charCode)); //FIXME - docs say e.char should be used https://developer.mozilla.org/en-US/docs/Web/Events/keypress
+    } else if(e.key.length == 1) {
+      syscall_pipe_write(stdin, e.key);
     }
-    //TODO: delete, home, end, etc.? or in shell?
+    //TODO: delete, home, end, etc.
   });
   
   syscall_run(["/bin/shell"], stdin, stdout, stderr);

@@ -131,6 +131,7 @@ function(args, stdin, stdout, stderr) {
     for(var i = 0; i < win.length; i++) {
       if(win[i].focus) {
         gfx_trigger_keypress(win[i].id, e);
+        return;
       }
     }
   });
