@@ -1,4 +1,7 @@
 function(args, stdin, stdout, stderr) {
+  //TODO: extract file
+  //TODO: proper flags
+  
   if(args.length < 2) { return; }
   
   var BLOCK_SIZE = 20 * 512;
