@@ -145,6 +145,19 @@ function gfx_strokerect(id, x, y, w, h, color, linewidth) {
   ctx.strokeRect(x, y, w, h);
 }
 
+function gfx_line(id, x1, y1, x2, y2, color, linewidth) {
+  var ctx = gfx_ctx[id];
+  
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.closePath();
+  
+  ctx.strokeStyle = color;
+  ctx.lineWidth = linewidth;
+  ctx.stroke();
+}
+
 function gfx_path_fill(id, color) {
   var ctx = gfx_ctx[id];
   ctx.fillStyle = color;
