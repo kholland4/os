@@ -1,4 +1,6 @@
 function(args, stdin, stdout, stderr) {
+  //TODO: l/r scrolling
+  
   if(args.length != 2) { syscall_pipe_write(stderr, "Bad args\n"); return; }
   var file = shell_process_relative(ENV_CWD, args[1]);
   if(!fs_exists(file)) { syscall_pipe_write(stderr, file + ": No such file or directory\n"); return; }
@@ -16,7 +18,7 @@ function(args, stdin, stdout, stderr) {
   var LINE_SIZE = 16;
   //var buf = "";
   var offset = {x: 0, y: 0};
-  var cursor = {x: 0, y: LINE_SIZE, line: 0, col: 0, pos: 0, visible: true, flashState: true};
+  var cursor = {x: 0, y: LINE_SIZE, line: 0, col: 0, pos: 0, visible: true, flashState: true, flashDelay: false};
   
   function render() {
     gfx_fillrect(gfx_id, 0, 0, size.width, size.height, "#FFFFFF");
@@ -34,6 +36,14 @@ function(args, stdin, stdout, stderr) {
     }
   }
   
+  function save() {
+    var fd = fs_open(file);
+    if(fd == null) { syscall_pipe_write(stderr, "Error opening file\n"); return; }
+    syscall_fd_truncate(fd, 0);
+    syscall_fd_write(fd, buf);
+    fs_close(fd);
+  }
+  
   //recalc cursor properties based on cursor.pos
   function calcCursor() {
     var sub = buf.substring(0, cursor.pos);
@@ -41,12 +51,20 @@ function(args, stdin, stdout, stderr) {
     var lines = buf.split("\n");
     cursor.col = sub.length - sub.lastIndexOf("\n") - 1;
     
+    if(cursor.line < offset.y) {
+      offset.y = cursor.line;
+    } else {
+      var maxLines = Math.floor(gfx_get_size(gfx_id).height / LINE_SIZE);
+      if(cursor.line >= offset.y + maxLines) {
+        offset.y = cursor.line - maxLines + 1;
+      }
+    }
+    
     cursor.x = gfx_measuretext(gfx_id, FONT_SIZE.toString() + "px monospace", lines[cursor.line].substring(0, cursor.col)).width;
     cursor.y = ((cursor.line + 1) - offset.y) * LINE_SIZE; //add one to line b/c canvas text uses bottom as position
     
     cursor.flashState = true;
-    
-    //TODO: scroll if cursor is off screen
+    cursor.flashDelay = true;
   }
   
   //move the cursor on click
@@ -81,6 +99,7 @@ function(args, stdin, stdout, stderr) {
     cursor.pos += char;
     
     cursor.flashState = true;
+    cursor.flashDelay = true;
     
     render();
   });
@@ -123,9 +142,37 @@ function(args, stdin, stdout, stderr) {
     } else {
       //no char - do u/d/l/r keys
       if(e.keyCode == 38) { //up
-        
+        if(cursor.line > 0) {
+          cursor.line--;
+          var lines = buf.split("\n");
+          if(cursor.col > lines[cursor.line].length) {
+            cursor.col = lines[cursor.line].length;
+          }
+          
+          cursor.pos = 0;
+          for(var i = 0; i < cursor.line; i++) {
+            cursor.pos += lines[i].length + 1;
+          }
+          cursor.pos += cursor.col;
+          
+          calcCursor();
+        }
       } else if(e.keyCode == 40) { //down
-        
+        var lines = buf.split("\n");
+        if(cursor.line + 1 < lines.length) {
+          cursor.line++;
+          if(cursor.col > lines[cursor.line].length) {
+            cursor.col = lines[cursor.line].length;
+          }
+          
+          cursor.pos = 0;
+          for(var i = 0; i < cursor.line; i++) {
+            cursor.pos += lines[i].length + 1;
+          }
+          cursor.pos += cursor.col;
+          
+          calcCursor();
+        }
       } else if(e.keyCode == 37) { //left
         if(cursor.pos > 0) { cursor.pos--; }
         calcCursor();
@@ -135,12 +182,17 @@ function(args, stdin, stdout, stderr) {
       }
     }
     render();
+    save(); //FIXME
   });
   
   //cursor flashing
   gfx_register_interval(gfx_id, setInterval(function() {
     cursor.visible = libwm_get(gfx_id).focus;
-    cursor.flashState = !cursor.flashState;
+    if(cursor.flashDelay) {
+      cursor.flashDelay = false;
+    } else {
+      cursor.flashState = !cursor.flashState;
+    }
     render(); //TODO: only partial rerender?
   }, 500));
   
