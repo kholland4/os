@@ -177,6 +177,10 @@ function init() {
       syscall_pipe_write(stderr, \"rmdir: failed to remove '\" + target + \"': Access denied\\n\");\n\
     }\n\
   }\n}\n"); fs_close(fd); //TODO: better error messages; iterate thru all args
+  fs_create("/bin/echo"); var fd = fs_open("/bin/echo"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
+  if(args.length < 2) { return; }\n\
+  syscall_pipe_write(stdout, args.slice(1).join(\" \") + \"\\n\");\n\
+}"); fs_close(fd);
   
   fs_mkdir("/usr"); fs_mkdir("/usr/bin");
   fs_create("/usr/bin/which"); var fd = fs_open("/usr/bin/which"); syscall_fd_write(fd, "function(args, stdin, stdout, stderr) {\n\
@@ -206,7 +210,7 @@ function init() {
       syscall_pipe_write(stderr, \"touch: cannot touch '\" + target + \"': No such file or directory\\n\");\n\
     }\n\
   }\n\}\n"); fs_close(fd);
-  //TODO: head, tail, mv, echo, more, less (?)
+  //TODO: head, tail, mv, more, less (?), hexdump
   
   fs_mkdir("/web");
   fs_mount("/web", "httpfs", {url: "/os/httpfs"});
@@ -214,10 +218,13 @@ function init() {
   fs_mkdir("/lib");
   fs_mkdir("/usr/lib");
   
-  syscall_run(["/bin/cp", "/web/shell.js", "/bin/shell"], null, null, null); //copy shell to root fs
-  syscall_run(["/bin/cp", "/web/libwm.js", "/usr/lib/libwm"], null, null, null); //copy libwm to root fs
-  syscall_run(["/bin/cp", "/web/wm.js", "/usr/bin/wm"], null, null, null); //copy wm to root fs
-  syscall_run(["/bin/cp", "/web/term.js", "/usr/bin/term"], null, null, null); //copy term to root fs
+  //copy some programs to root fs
+  syscall_run(["/bin/cp", "/web/shell.js", "/bin/shell"], null, null, null);
+  syscall_run(["/bin/cp", "/web/tar.js", "/bin/tar"], null, null, null);
+  syscall_run(["/bin/cp", "/web/libwm.js", "/usr/lib/libwm"], null, null, null);
+  syscall_run(["/bin/cp", "/web/wm.js", "/usr/bin/wm"], null, null, null);
+  syscall_run(["/bin/cp", "/web/term.js", "/usr/bin/term"], null, null, null);
+  syscall_run(["/bin/cp", "/web/textedit.js", "/usr/bin/textedit"], null, null, null);
   
   fs_mkdir("/proc");
   fs_mount("/proc", "procfs", {});
