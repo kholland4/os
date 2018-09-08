@@ -27,11 +27,11 @@ function init() {
   var stdout = syscall_pipe_create();
   var stderr = syscall_pipe_create();
   terminal_attach(document.getElementById("vt1"), stdin, stdout, stderr);
-  document.getElementById("vt1").style.width = (window.innerWidth / 2).toString() + "px";
+  document.getElementById("vt1").style.width = Math.floor(window.innerWidth / 3).toString() + "px";
   document.getElementById("vt1").style.display = "inline-block";
   //shell_create(stdin, stdout, stderr);
   
-  var gfx_id = gfx_create(document.getElementById("gfx"), window.innerWidth / 2, window.innerHeight);
+  var gfx_id = gfx_create(document.getElementById("gfx"), Math.floor(window.innerWidth * (2/3)), window.innerHeight);
   
   //syscall_pipe_write(stderr, "loading root fs...");
   //force redraw
@@ -53,9 +53,11 @@ function init() {
     var file = shell_process_relative(ENV_CWD, args[i]);\n\
     if(!fs_exists(file)) {\n\
       syscall_pipe_write(stderr, \"cat: \" + file + \": No such file or directory\\n\");\n\
+      continue;\n\
     }\n\
     if(fs_isdir(file)) {\n\
       syscall_pipe_write(stderr, \"cat: \" + file + \": Is a directory\\n\");\n\
+      continue;\n\
     }\n\
     var fd = fs_open(file);\n\
     if(fd != null) {\n\
