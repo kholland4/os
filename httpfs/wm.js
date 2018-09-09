@@ -48,9 +48,9 @@ function(args, stdin, stdout, stderr) {
       } else if(winResizeID == win[i].id) {
         if(win[i].canResize) {
           var newSize = { width: x - win[i].x - winResizePos.x, height: y - win[i].y - winResizePos.y };
-          if(newSize.width >= 100 && newSize.height >= 100) { //FIXME
-            libwm_resize(win[i].id, newSize.width, newSize.height);
-          }
+          newSize.width = Math.max(newSize.width, 100);
+          newSize.height = Math.max(newSize.height, 100);
+          libwm_resize(win[i].id, newSize.width, newSize.height);
         } else {
           winResizeID = null;
           winResizePos = null;
