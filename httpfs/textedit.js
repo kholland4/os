@@ -11,23 +11,27 @@ function(args, stdin, stdout, stderr) {
   fs_close(fd);
   
   var size = {width: 576, height: 768};
-  var gfx_id = libwm_create(size.width, size.height);
+  var gfx_id_window = libwm_create(size.width, size.height);
+  
+  var gfx_id = gfx_id_window;
   gfx_fillrect(gfx_id, 0, 0, size.width, size.height, "#FFFFFF");
   
   var FONT_SIZE = 12;
   var LINE_SIZE = 16;
+  var font = FONT_SIZE.toString() + "px monospace";
   //var buf = "";
   var offset = {x: 0, y: 0};
   var cursor = {x: 0, y: LINE_SIZE, line: 0, col: 0, pos: 0, visible: true, flashState: true, flashDelay: false};
   
   function render() {
+    size = gfx_get_size(gfx_id);
     gfx_fillrect(gfx_id, 0, 0, size.width, size.height, "#FFFFFF");
     
     var lines = buf.split("\n");
     var maxLines = Math.floor(gfx_get_size(gfx_id).height / LINE_SIZE);
     
     for(var i = 0; i < Math.min(lines.length, maxLines); i++) {
-      gfx_text(gfx_id, FONT_SIZE.toString() + "px monospace", "#000000", lines[i + offset.y], 0, LINE_SIZE * (i + 1));
+      gfx_text(gfx_id, font, "#000000", lines[i + offset.y], 0, LINE_SIZE * (i + 1));
     }
     
     if(cursor.visible && cursor.flashState) {
@@ -60,7 +64,7 @@ function(args, stdin, stdout, stderr) {
       }
     }
     
-    cursor.x = gfx_measuretext(gfx_id, FONT_SIZE.toString() + "px monospace", lines[cursor.line].substring(0, cursor.col)).width;
+    cursor.x = gfx_measuretext(gfx_id, font, lines[cursor.line].substring(0, cursor.col)).width;
     cursor.y = ((cursor.line + 1) - offset.y) * LINE_SIZE; //add one to line b/c canvas text uses bottom as position
     
     cursor.flashState = true;
@@ -77,9 +81,9 @@ function(args, stdin, stdout, stderr) {
     if(line >= lines.length) { return; }
     var lineData = lines[line];
     for(var i = 0; i <= lineData.length; i++) {
-      var wThis = gfx_measuretext(gfx_id, FONT_SIZE.toString() + "px monospace", lineData.substring(0, i)).width;
+      var wThis = gfx_measuretext(gfx_id, font, lineData.substring(0, i)).width;
       var wNext = null;
-      if(i + 1 <= lineData.length) { wNext = gfx_measuretext(gfx_id, FONT_SIZE.toString() + "px monospace", lineData.substring(0, i + 1)).width; }
+      if(i + 1 <= lineData.length) { wNext = gfx_measuretext(gfx_id, font, lineData.substring(0, i + 1)).width; }
       
       if(wNext == null || x < ((wThis + wNext) / 2)) {
         char = i;
@@ -195,6 +199,8 @@ function(args, stdin, stdout, stderr) {
     }
     render(); //TODO: only partial rerender?
   }, 500));
+  
+  gfx_bind_resize(gfx_id_window, render);
   
   render();
 }
