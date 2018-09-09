@@ -221,6 +221,7 @@ function init() {
   //copy some programs to root fs
   syscall_run(["/bin/cp", "/web/shell.js", "/bin/shell"], null, null, null);
   syscall_run(["/bin/cp", "/web/tar.js", "/bin/tar"], null, null, null);
+  syscall_run(["/bin/cp", "/web/untar.js", "/bin/untar"], null, null, null);
   syscall_run(["/bin/cp", "/web/libwm.js", "/usr/lib/libwm"], null, null, null);
   syscall_run(["/bin/cp", "/web/wm.js", "/usr/bin/wm"], null, null, null);
   syscall_run(["/bin/cp", "/web/term.js", "/usr/bin/term"], null, null, null);
