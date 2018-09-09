@@ -1,6 +1,7 @@
 function(args, stdin, stdout, stderr) {
   var size = {width: 640, height: 480};
   var gfx_id = libwm_create(size.width, size.height);
+  libwm_get(gfx_id).canResize = false;
   gfx_fillrect(gfx_id, 0, 0, size.width, size.height, "#000000");
   
   function overlapRect(l1, r1, l2, r2) {

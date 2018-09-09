@@ -31,6 +31,14 @@ function gfx_resize(id, width, height) {
   var ctx = gfx_ctx[id];
   ctx.canvas.width = width;
   ctx.canvas.height = height;
+  
+  if("onresize" in gfx_data[id]) {
+    gfx_data[id].onresize();
+  }
+}
+
+function gfx_bind_resize(id, callback) {
+  gfx_data[id].onresize = callback;
 }
 
 function gfx_destroy(id) {

@@ -24,18 +24,44 @@ function(args, stdin, stdout, stderr) {
   var winSelID = null;
   var winSelPos = null;
   
+  var winResizeID = null;
+  var winResizePos = null;
+  
   gfx_bind_mousemove(gfx_id, function(x, y) {
+    var hasResize = false;
     var win = libwm_windows;
     for(var i = 0; i < win.length; i++) {
       var size = gfx_get_size(win[i].id);
-      if(x >= win[i].x && x < win[i].x + size.width && y >= win[i].y && y < win[i].y + size.height) {
+      if(x >= win[i].x && x < win[i].x + size.width && y >= win[i].y && y < win[i].y + size.height && winSelID == null && winResizeID == null) {
         gfx_trigger_mousemove(win[i].id, x - win[i].x, y - win[i].y);
       }
-      //dragging
+      
+      //resize cursor
+      if(x >= win[i].x + size.width && x < win[i].x + size.width + BORDER_SIZE && y >= win[i].y + size.height && y < win[i].y + size.height + BORDER_SIZE && win[i].canResize || winResizeID != null) {
+        hasResize = true;
+      }
+      
+      //dragging or resize
       if(winSelID == win[i].id) {
         win[i].x = x + winSelPos.x;
         win[i].y = y + winSelPos.y;
+      } else if(winResizeID == win[i].id) {
+        if(win[i].canResize) {
+          var newSize = { width: x - win[i].x - winResizePos.x, height: y - win[i].y - winResizePos.y };
+          if(newSize.width >= 100 && newSize.height >= 100) { //FIXME
+            libwm_resize(win[i].id, newSize.width, newSize.height);
+          }
+        } else {
+          winResizeID = null;
+          winResizePos = null;
+        }
       }
+    }
+    
+    if(hasResize) {
+      document.body.style.cursor = "se-resize"; //TODO: move to gfx.js and use wrapper
+    } else {
+      document.body.style.cursor = "initial";
     }
   });
   
@@ -65,7 +91,7 @@ function(args, stdin, stdout, stderr) {
         }
         win[i].focus = true;
       } else if(x >= win[i].x - BORDER_SIZE && x < win[i].x + size.width + BORDER_SIZE && y >= win[i].y - BAR_SIZE && y < win[i].y) {
-        //buttons?
+        //top bar
         if(x >= win[i].x + size.width - (BUTTON_SIZE_X * BUTTON_COUNT) && x < win[i].x + size.width && y >= win[i].y - BAR_SIZE && y < win[i].y + BUTTON_SIZE_Y) {
           //buttons
           //TOOD: multi-button support
@@ -85,6 +111,19 @@ function(args, stdin, stdout, stderr) {
           win[i].focus = true;
           hitWin = true;
         }
+      } else if(x >= win[i].x + size.width && x < win[i].x + size.width + BORDER_SIZE && y >= win[i].y + size.height && y < win[i].y + size.height + BORDER_SIZE) {
+        //bottom right corner - resize
+        winResizeID = win[i].id;
+        winResizePos = {
+          x: x - (win[i].x + size.width),
+          y: y - (win[i].y + size.height)
+        };
+        
+        for(var n = 0; n < win.length; n++) {
+          win[n].focus = false;
+        }
+        win[i].focus = true;
+        hitWin = true;
       }
     }
     
@@ -124,6 +163,8 @@ function(args, stdin, stdout, stderr) {
     
     winSelID = null;
     winSelPos = null;
+    winResizeID = null;
+    winResizePos = null;
   });
   
   gfx_bind_keypress(gfx_id, function(e) {

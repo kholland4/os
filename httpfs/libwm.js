@@ -14,7 +14,8 @@ function libwm_create(width, height) {
     id: id,
     x: 50,
     y: 50,
-    focus: true
+    focus: true,
+    canResize: true
   });
   return id;
 }
@@ -37,4 +38,10 @@ function libwm_get(id) {
     }
   }
   return null;
+}
+
+function libwm_resize(id, width, height) {
+  if(libwm_get(id).canResize) {
+    gfx_resize(id, width, height);
+  }
 }

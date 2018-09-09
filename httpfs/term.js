@@ -25,6 +25,7 @@ function(args, stdin, stdout, stderr) {
   }
   
   function render() {
+    size = gfx_get_size(gfx_id);
     gfx_fillrect(gfx_id, 0, 0, size.width, size.height, "#000000");
     
     var lines = getLines(buf);
@@ -81,6 +82,8 @@ function(args, stdin, stdout, stderr) {
     }
     //TODO: delete, home, end, etc.
   });
+  
+  gfx_bind_resize(gfx_id, render);
   
   syscall_run(["/bin/shell"], stdin, stdout, stderr);
 }
