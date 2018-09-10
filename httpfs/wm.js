@@ -6,6 +6,7 @@ function(args, stdin, stdout, stderr) {
   var BUTTON_SIZE_X = 20;
   var BUTTON_SIZE_Y = 15;
   var BUTTON_COUNT = 1;
+  var RESIZE_AREA = 8;
   
   syscall_loadlib("/usr/lib/libwm");
   var gfx_id;
@@ -37,7 +38,7 @@ function(args, stdin, stdout, stderr) {
       }
       
       //resize cursor
-      if(x >= win[i].x + size.width && x < win[i].x + size.width + BORDER_SIZE && y >= win[i].y + size.height && y < win[i].y + size.height + BORDER_SIZE && win[i].canResize || winResizeID != null) {
+      if(x >= win[i].x + size.width && x < win[i].x + size.width + RESIZE_AREA && y >= win[i].y + size.height && y < win[i].y + size.height + RESIZE_AREA && win[i].canResize || winResizeID != null) {
         hasResize = true;
       }
       
@@ -111,7 +112,7 @@ function(args, stdin, stdout, stderr) {
           win[i].focus = true;
           hitWin = true;
         }
-      } else if(x >= win[i].x + size.width && x < win[i].x + size.width + BORDER_SIZE && y >= win[i].y + size.height && y < win[i].y + size.height + BORDER_SIZE) {
+      } else if(x >= win[i].x + size.width && x < win[i].x + size.width + RESIZE_AREA && y >= win[i].y + size.height && y < win[i].y + size.height + RESIZE_AREA) {
         //bottom right corner - resize
         winResizeID = win[i].id;
         winResizePos = {
