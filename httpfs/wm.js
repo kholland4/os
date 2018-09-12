@@ -178,7 +178,7 @@ function(args, stdin, stdout, stderr) {
     }
   });
   
-  setInterval(function() {
+  gfx_register_interval(gfx_id, setInterval(function() {
     var size = gfx_get_size(gfx_id);
     gfx_fillrect(gfx_id, 0, 0, size.width, size.height, "#FFFFFF");
     var win = libwm_windows;
@@ -194,5 +194,5 @@ function(args, stdin, stdout, stderr) {
       
       gfx_copy(gfx_id, win[i].id, win[i].x, win[i].y);
     }
-  }, 30);
+  }, 30));
 }
